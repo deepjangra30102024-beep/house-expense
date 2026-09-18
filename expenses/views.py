@@ -3,17 +3,6 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib import messages
 
-def signup(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Registration successful. Welcome!')
-            return redirect('dashboard')
-    else:
-        form = UserCreationForm()
-    return render(request, 'registration/signup.html', {'form': form})
 
 from django.contrib.auth.decorators import login_required
 from .models import Expense, Category
@@ -185,20 +174,41 @@ def delete_category(request, pk):
     return render(request, 'expenses/delete_category.html', {'category': category})
 
 from .models import UserProfile
-from .forms import UserProfileForm
+from .forms import UserProfileForm, UserUpdateForm
 
 @login_required
 def settings_view(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Settings updated successfully!')
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'Profile updated successfully!')
             return redirect('settings')
     else:
-        form = UserProfileForm(instance=profile)
-    return render(request, 'expenses/settings.html', {'form': form})
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = UserProfileForm(instance=profile)
+    return render(request, 'expenses/settings.html', {'u_form': u_form, 'p_form': p_form})
+
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important to keep the user logged in
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('settings')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'expenses/change_password.html', {'form': form})
 
 import csv
 from django.http import HttpResponse
@@ -288,3 +298,281 @@ def export_pdf(request):
 def report_view(request):
     return render(request, 'expenses/report.html')
 
+from .models import Document, DocumentFile
+
+@login_required
+def document_list(request):
+    documents = Document.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Optional search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        documents = documents.filter(description__icontains=search_query)
+        
+    paginator = Paginator(documents, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+        
+    return render(request, 'expenses/document_list.html', {'documents': page_obj, 'search_query': search_query})
+
+@login_required
+def add_document(request):
+    if request.method == 'POST':
+        description = request.POST.get('description')
+        expiry_date = request.POST.get('expiry_date')
+        files = request.FILES.getlist('files')
+        
+        if not description:
+            messages.error(request, 'Description is required.')
+            return render(request, 'expenses/add_document.html')
+            
+        document = Document.objects.create(
+            user=request.user,
+            description=description,
+            expiry_date=expiry_date if expiry_date else None
+        )
+        
+        for f in files:
+            DocumentFile.objects.create(document=document, file=f)
+            
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.user = request.user
+            category.save()
+            messages.success(request, 'Category added successfully!')
+            return redirect('category_list')
+    else:
+        form = CategoryForm()
+    return render(request, 'expenses/add_category.html', {'form': form})
+
+@login_required
+def edit_category(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Category updated successfully!')
+            return redirect('category_list')
+    else:
+        form = CategoryForm(instance=category)
+    return render(request, 'expenses/edit_category.html', {'form': form, 'category': category})
+
+@login_required
+def delete_category(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, 'Category deleted successfully!')
+        return redirect('category_list')
+    return render(request, 'expenses/delete_category.html', {'category': category})
+
+from .models import UserProfile
+from .forms import UserProfileForm, UserUpdateForm
+
+@login_required
+def settings_view(request):
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('settings')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = UserProfileForm(instance=profile)
+    return render(request, 'expenses/settings.html', {'u_form': u_form, 'p_form': p_form})
+
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important to keep the user logged in
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('settings')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'expenses/change_password.html', {'form': form})
+
+import csv
+from django.http import HttpResponse
+
+@login_required
+def export_excel(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="expenses.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Description', 'Category', 'Amount'])
+
+    expenses = Expense.objects.filter(user=request.user).order_by('-date')
+    
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    if start_date:
+        expenses = expenses.filter(date__gte=start_date)
+    if end_date:
+        expenses = expenses.filter(date__lte=end_date)
+        
+    for expense in expenses:
+        category_name = expense.category.name if expense.category else 'Uncategorized'
+        writer.writerow([expense.date.strftime('%Y-%m-%d'), expense.description, category_name, expense.amount])
+
+    return response
+
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+
+@login_required
+def export_pdf(request):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="expenses.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=letter)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    elements.append(Paragraph('Expense Report', styles['Title']))
+    elements.append(Spacer(1, 12))
+
+    data = [['Date', 'Description', 'Category', 'Amount']]
+    expenses = Expense.objects.filter(user=request.user).order_by('-date')
+    
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    if start_date:
+        expenses = expenses.filter(date__gte=start_date)
+    if end_date:
+        expenses = expenses.filter(date__lte=end_date)
+    
+    total = 0
+    for expense in expenses:
+        category_name = expense.category.name if expense.category else 'Uncategorized'
+        data.append([
+            expense.date.strftime('%Y-%m-%d'), 
+            expense.description, 
+            category_name, 
+            f"{expense.amount:.2f}"
+        ])
+        total += expense.amount
+        
+    data.append(['', '', 'Total', f"{total:.2f}"])
+
+    t = Table(data)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (2, -1), (2, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (3, -1), (3, -1), 'Helvetica-Bold'),
+    ]))
+    
+    elements.append(t)
+    doc.build(elements)
+    
+    return response
+
+@login_required
+def report_view(request):
+    return render(request, 'expenses/report.html')
+
+from .models import Document, DocumentFile
+
+@login_required
+def document_list(request):
+    documents = Document.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Optional search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        documents = documents.filter(description__icontains=search_query)
+        
+    paginator = Paginator(documents, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+        
+    return render(request, 'expenses/document_list.html', {'documents': page_obj, 'search_query': search_query})
+
+@login_required
+def add_document(request):
+    if request.method == 'POST':
+        description = request.POST.get('description')
+        expiry_date = request.POST.get('expiry_date')
+        files = request.FILES.getlist('files')
+        
+        if not description:
+            messages.error(request, 'Description is required.')
+            return render(request, 'expenses/add_document.html')
+            
+        document = Document.objects.create(
+            user=request.user,
+            description=description,
+            expiry_date=expiry_date if expiry_date else None
+        )
+        
+        for f in files:
+            DocumentFile.objects.create(document=document, file=f)
+            
+        messages.success(request, 'Document(s) uploaded successfully!')
+        return redirect('document_list')
+        
+    return render(request, 'expenses/add_document.html')
+
+@login_required
+def edit_document(request, pk):
+    document = get_object_or_404(Document, pk=pk, user=request.user)
+    if request.method == 'POST':
+        description = request.POST.get('description')
+        expiry_date = request.POST.get('expiry_date')
+        files = request.FILES.getlist('files')
+        
+        if not description:
+            messages.error(request, 'Description is required.')
+            return render(request, 'expenses/edit_document.html', {'document': document})
+            
+        document.description = description
+        document.expiry_date = expiry_date if expiry_date else None
+        document.save()
+        
+        for f in files:
+            DocumentFile.objects.create(document=document, file=f)
+            
+        messages.success(request, 'Document updated successfully!')
+        return redirect('document_list')
+        
+    return render(request, 'expenses/edit_document.html', {'document': document})
+
+@login_required
+def delete_document_file(request, file_pk):
+    doc_file = get_object_or_404(DocumentFile, pk=file_pk, document__user=request.user)
+    document_pk = doc_file.document.pk
+    # Using POST is better practice for deletion, but we can support both here
+    doc_file.delete()
+    messages.success(request, 'File deleted successfully!')
+    return redirect('edit_document', pk=document_pk)
+
+@login_required
+def delete_document(request, pk):
+    document = get_object_or_404(Document, pk=pk, user=request.user)
+    if request.method == 'POST':
+        document.delete()
+        messages.success(request, 'Document deleted successfully!')
+        return redirect('document_list')
+    return render(request, 'expenses/delete_document.html', {'document': document})

@@ -95,16 +95,12 @@
                 <input type="password" name="password" class="form-control" placeholder="Enter your password" required id="id_password">
             </div>
 
-            <!-- Optional: Add a forgot password link later -->
-            <!-- <a href="#" class="forgot-password">Forgot Password?</a> -->
+            <a href="{% url 'password_reset' %}" class="forgot-password">Forgot Password?</a>
 
             <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px; padding: 10px; font-weight: 500;">Sign In</button>
             <input type="hidden" name="next" value="{{ next }}">
         </form>
-        
-        <div style="margin-top: 20px; font-size: 0.9rem; color: var(--text-muted);">
-            Don't have an account? <a href="{% url 'signup' %}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Sign up here</a>
-        </div>
+
     </div>
 </div>
 {% endblock %}
