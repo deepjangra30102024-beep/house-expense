@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+
+{% block title %}Expense List - House Expense{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Title Box styles */
+    .page-title-box {
+        padding-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-title {
+        font-size: 16px;
+        margin: 0;
+        line-height: 1.5;
+        font-weight: 500;
+        color: var(--text-main);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 13.5px;
+    }
+
+    .breadcrumb-item {
+        color: var(--text-muted);
+    }
+    
+    .breadcrumb-item a {
+        color: var(--text-muted);
+        text-decoration: none;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: ">";
+        padding: 0 8px;
+        color: var(--text-muted);
+        font-size: 11px;
+    }
+
+    /* Card and Table styles */
+    .card-title {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: var(--text-main);
+    }
+    
+    .text-muted-desc {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+    
+    .header-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    .search-box input {
+        padding: 8px 16px 8px 36px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+        height: 38px;
+        width: 100%;
+        max-width: 250px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .search-box input:focus {
+        border-color: var(--primary-color, #4361ee);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        width: 16px;
+        height: 16px;
+    }
+
+    .btn-custom {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 38px;
+        padding: 0 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        border: 1px solid transparent;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .btn-search {
+        background-color: var(--primary-color, #4361ee);
+        color: white;
+    }
+    
+    .btn-search:hover {
+        background-color: #3a53d0;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-clear {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border-color: #e2e8f0;
+    }
+    
+    .btn-clear:hover {
+        background-color: #e2e8f0;
+        color: #475569;
+        text-decoration: none;
+    }
+
+    .btn-excel {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .btn-excel:hover {
+        background-color: #059669;
+        color: white;
+        text-decoration: none;
+    }
+
+    .btn-pdf {
+        background-color: #ef4444;
+        color: white;
+    }
+
+    .btn-pdf:hover {
+        background-color: #dc2626;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-new {
+        background-color: var(--primary-color, #4361ee);
+        color: white;
+    }
+    
+    .btn-new:hover {
+        background-color: #3a53d0;
+        color: white;
+        text-decoration: none;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #f1f5f9;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .pagination-info {
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .pagination-links {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .page-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #475569;
+        background-color: #fff;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .page-link:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: var(--primary-color, #4361ee);
+    }
+
+    .page-link.active {
+        background-color: var(--primary-color, #4361ee);
+        color: white;
+        border-color: var(--primary-color, #4361ee);
+    }
+
+    .page-link.disabled {
+        color: #94a3b8;
+        background-color: #f8fafc;
+        border-color: #e2e8f0;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        color: var(--text-main);
+        border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+        padding: 15px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+        font-size: 14px;
+    }
+
+    .table thead th {
+        vertical-align: bottom;
+        border-bottom: 1px solid #dee2e6;
+        font-weight: 600;
+        color: #343a40;
+        background: transparent;
+        border-top: none;
+    }
+    
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Icon buttons for Actions */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        color: var(--text-muted);
+        background: white;
+        transition: all 0.2s;
+        margin-right: 5px;
+        text-decoration: none;
+    }
+    
+    .action-btn:hover {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .action-btn.delete:hover {
+        color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+    
+    .action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .right-header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .badge-outline {
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 3px 7px;
+        border-radius: 4px;
+        font-size: 11px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="header-actions">
+                    <div class="right-header">
+                        <form method="get" class="search-box">
+                            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" name="search" placeholder="Search Description..." value="{{ search_query }}">
+                            <button type="submit" class="btn-custom btn-search">Search</button>
+                            {% if search_query %}
+                                <a href="{% url 'expense_list' %}" class="btn-custom btn-clear">Clear</a>
+                            {% endif %}
+                        </form>
+                        <a href="{% url 'export_excel' %}" class="btn-custom btn-excel">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            CSV/Excel
+                        </a>
+                        <a href="{% url 'export_pdf' %}" class="btn-custom btn-pdf">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M10 13l-1.5 1.5c-1 1-1 2.5 0 3.5s2.5 1 3.5 0L13.5 16"></path></svg>
+                            PDF
+                        </a>
+                        <a href="{% url 'add_expense' %}" class="btn-custom btn-new">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            New
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%;">ID</th>
+                                <th style="width: 15%;">Date</th>
+                                <th style="width: 30%;">Description</th>
+                                <th style="width: 15%;">Category</th>
+                                <th style="width: 10%;">Doc</th>
+                                <th style="width: 15%;">Amount</th>
+                                <th style="width: 10%;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ expense.date|date:"M d, Y" }}</td>
+                                <td>{{ expense.description }}</td>
+                                <td>
+                                    {% if expense.category %}
+                                        <span class="badge-outline">{{ expense.category.name }}</span>
+                                    {% else %}
+                                        <span class="badge-outline" style="color:var(--text-muted); border-color:var(--border-color)">Uncategorized</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if expense.document %}
+                                        <a href="{{ expense.document.url }}" target="_blank" class="action-btn" title="View Document">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                        </a>
+                                    {% else %}
+                                        <span style="color:#adb5bd; font-size:12px;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-weight: 500;">{{ request.user.profile.currency|default:"$" }}{{ expense.amount|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'edit_expense' expense.pk %}" class="action-btn" title="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </a>
+                                    <a href="{% url 'delete_expense' expense.pk %}" class="action-btn delete" title="Delete">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 30px;">No expenses found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Showing page {{ expenses.number }} of {{ expenses.paginator.num_pages }}
+                    </div>
+                    <div class="pagination-links">
+                        {% if expenses.has_previous %}
+                            <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link" title="First Page">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+                            </a>
+                            <a href="?page={{ expenses.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link" title="Previous Page">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </a>
+                        {% else %}
+                            <span class="page-link disabled"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg></span>
+                            <span class="page-link disabled"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></span>
+                        {% endif %}
+
+                        <span class="page-link active">{{ expenses.number }}</span>
+
+                        {% if expenses.has_next %}
+                            <a href="?page={{ expenses.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link" title="Next Page">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </a>
+                            <a href="?page={{ expenses.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="page-link" title="Last Page">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+                            </a>
+                        {% else %}
+                            <span class="page-link disabled"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                            <span class="page-link disabled"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg></span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

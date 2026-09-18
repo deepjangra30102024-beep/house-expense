@@ -1,0 +1,563 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - House Expense{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-title-box {
+        padding-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .page-title {
+        font-size: 16px;
+        margin: 0;
+        line-height: 1.5;
+        font-weight: 500;
+        color: var(--text-main);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 13.5px;
+    }
+
+    .breadcrumb-item {
+        color: var(--text-muted);
+    }
+    
+    .breadcrumb-item a {
+        color: var(--text-muted);
+        text-decoration: none;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: ">";
+        padding: 0 8px;
+        color: var(--text-muted);
+        font-size: 11px;
+    }
+
+    .header-stats {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 575px) {
+        .header-stats {
+            gap: 15px;
+            width: 100%;
+        }
+        .header-stat-item {
+            align-items: flex-start;
+        }
+    }
+
+    .header-stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .mini-bar-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 24px;
+        margin-bottom: 5px;
+    }
+    
+    .mini-bar-chart .bar {
+        width: 4px;
+        background-color: var(--warning-color);
+        border-radius: 1px;
+    }
+    
+    .mini-bar-chart.red .bar { background-color: var(--danger-color); }
+
+    .header-stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    /* Info Cards */
+
+    .mini-stat {
+        background-color: var(--danger-color);
+        border-radius: 4px;
+        padding: 20px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    
+    /* Simulate a slight gradient/overlay effect from the theme */
+    .mini-stat::after {
+        content: "";
+        position: absolute;
+        top: 0; right: 0; bottom: 0; left: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+        pointer-events: none;
+    }
+
+    .mini-stat-title {
+        font-size: 13px;
+        text-transform: uppercase;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        margin-bottom: 10px;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .mini-stat-value {
+        font-size: 26px;
+        font-weight: 500;
+        margin-bottom: 20px;
+    }
+
+    .mini-stat-icon {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        width: 48px;
+        height: 48px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mini-stat-badge {
+        font-size: 11px;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-weight: 600;
+        margin-right: 5px;
+    }
+    
+    .mini-stat-badge.up { background-color: var(--warning-color); color: white; }
+    .mini-stat-badge.down { background-color: var(--primary-color); color: white; }
+    .mini-stat-badge.neutral { background-color: #02a499; color: white; }
+    
+    .mini-stat-desc {
+        font-size: 12px;
+        color: rgba(255,255,255,0.8);
+    }
+
+    /* Charts Card */
+    .card-body {
+        padding: 24px;
+    }
+    
+    .card-title {
+        font-size: 15px;
+        font-weight: 500;
+        margin-bottom: 20px;
+        color: var(--text-main);
+    }
+    
+    .chart-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .chart-stat-item h4 {
+        font-size: 20px;
+        font-weight: 500;
+        color: var(--text-main);
+        margin-bottom: 5px;
+    }
+    
+    .chart-stat-item p {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    
+    /* Table styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    .table {
+        width: 100%;
+        margin-bottom: 1rem;
+        color: var(--text-main);
+        border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid var(--border-color);
+        font-size: 14px;
+    }
+    
+    .table thead th {
+        vertical-align: bottom;
+        border-bottom: 2px solid var(--border-color);
+        font-weight: 500;
+        color: var(--text-muted);
+        border-top: none;
+    }
+    
+    .badge-outline {
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 3px 7px;
+        border-radius: 4px;
+        font-size: 11px;
+    }
+
+    .action-icon {
+        color: var(--text-muted);
+        margin: 0 5px;
+        transition: color 0.3s;
+    }
+    
+    .action-icon:hover {
+        color: var(--primary-color);
+    }
+    
+    .action-icon.delete:hover {
+        color: var(--danger-color);
+    }
+</style>
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Title and Breadcrumb -->
+<div class="page-title-box">
+    <div>
+        <h4 class="page-title">Dashboard</h4>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Lexa</a></li>
+            <li class="breadcrumb-item"><a href="#">Dashboard</a></li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </div>
+    
+    <div class="header-stats">
+        <div class="header-stat-item">
+            <div class="mini-bar-chart">
+                <div class="bar" style="height: 12px;"></div>
+                <div class="bar" style="height: 18px;"></div>
+                <div class="bar" style="height: 10px;"></div>
+                <div class="bar" style="height: 22px;"></div>
+                <div class="bar" style="height: 14px;"></div>
+                <div class="bar" style="height: 24px;"></div>
+                <div class="bar" style="height: 16px;"></div>
+                <div class="bar" style="height: 20px;"></div>
+            </div>
+            <span class="header-stat-label">Categories {{ categories.count }}</span>
+        </div>
+        <div class="header-stat-item">
+            <div class="mini-bar-chart red">
+                <div class="bar" style="height: 15px;"></div>
+                <div class="bar" style="height: 10px;"></div>
+                <div class="bar" style="height: 24px;"></div>
+                <div class="bar" style="height: 14px;"></div>
+                <div class="bar" style="height: 18px;"></div>
+                <div class="bar" style="height: 20px;"></div>
+                <div class="bar" style="height: 12px;"></div>
+                <div class="bar" style="height: 22px;"></div>
+            </div>
+            <span class="header-stat-label">Total Spend {{ request.user.profile.currency|default:"$" }}{{ total_expenses|floatformat:2|default:"0.00" }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row">
+    <!-- Using House Expense App Data in Lexa style -->
+    <div class="col-xl-3 col-md-6">
+        <div class="mini-stat">
+            <div class="mini-stat-title">Total Expenses</div>
+            <div class="mini-stat-value">{{ request.user.profile.currency|default:"$" }}{{ total_expenses|floatformat:2|default:"0.00" }}</div>
+            <div class="mini-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+            </div>
+            <div>
+                <span class="mini-stat-badge up">+11%</span>
+                <span class="mini-stat-desc">From previous period</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="mini-stat">
+            <div class="mini-stat-title">Categories</div>
+            <div class="mini-stat-value">{{ categories.count|default:"0" }}</div>
+            <div class="mini-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            </div>
+            <div>
+                <span class="mini-stat-badge down">-29%</span>
+                <span class="mini-stat-desc">From previous period</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="mini-stat">
+            <div class="mini-stat-title">Average Expense</div>
+            <div class="mini-stat-value">
+                {% if expenses and total_expenses %}
+                    {{ request.user.profile.currency|default:"$" }}{% widthratio total_expenses expenses.count 1 %}
+                {% else %}
+                    {{ request.user.profile.currency|default:"$" }}0.00
+                {% endif %}
+            </div>
+            <div class="mini-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            </div>
+            <div>
+                <span class="mini-stat-badge neutral">0%</span>
+                <span class="mini-stat-desc">From previous period</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="mini-stat">
+            <div class="mini-stat-title">Entries</div>
+            <div class="mini-stat-value">{{ expenses.count|default:"0" }}</div>
+            <div class="mini-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            </div>
+            <div>
+                <span class="mini-stat-badge up">+89%</span>
+                <span class="mini-stat-desc">From previous period</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Monthly Expenses (Donut)</h4>
+                <div class="chart-stats">
+                    <div class="chart-stat-item">
+                        <h4>{{ request.user.profile.currency|default:"$" }}{{ total_expenses|floatformat:2|default:"0.00" }}</h4>
+                        <p>Total Spend</p>
+                    </div>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="donutChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Expense Trend (Area)</h4>
+                <div class="chart-stats">
+                    <div class="chart-stat-item">
+                        <h4>Last 7 Days</h4>
+                        <p>Daily Spend</p>
+                    </div>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="areaChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Monthly Comparison (Bar)</h4>
+                <div class="chart-stats">
+                    <div class="chart-stat-item">
+                        <h4>Last 6 Months</h4>
+                        <p>Monthly Spend</p>
+                    </div>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Expenses Table -->
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    Recent Expenses
+                    <a href="{% url 'add_expense' %}" class="btn-primary" style="font-size: 13px; padding: 6px 12px;">Add New</a>
+                </h4>
+                
+                <div class="table-responsive">
+                    {% if expenses %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses|slice:":5" %}
+                            <tr>
+                                <td>{{ expense.date|date:"M d, Y" }}</td>
+                                <td>{{ expense.description }}</td>
+                                <td>
+                                    {% if expense.category %}
+                                        <span class="badge-outline">{{ expense.category.name }}</span>
+                                    {% else %}
+                                        <span class="badge-outline" style="color:var(--text-muted); border-color:var(--border-color)">Uncategorized</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-weight: 500;">{{ request.user.profile.currency|default:"$" }}{{ expense.amount|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'edit_expense' expense.pk %}" class="action-icon" title="Edit">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="16 3 21 8 8 21 3 21 3 16 16 3"></polygon></svg>
+                                    </a>
+                                    <a href="{% url 'delete_expense' expense.pk %}" class="action-icon delete" title="Delete">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
+                        No expenses recorded yet. Start tracking!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Common Options
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: { display: true, grid: { display: false } },
+                y: { display: true, border: { display: false } }
+            }
+        };
+
+        // Parse JSON data from Django
+        const donutLabels = JSON.parse('{{ donut_labels|escapejs }}' || '[]');
+        const donutData = JSON.parse('{{ donut_data|escapejs }}' || '[]');
+        const areaLabels = JSON.parse('{{ area_labels|escapejs }}' || '[]');
+        const areaData = JSON.parse('{{ area_data|escapejs }}' || '[]');
+        const barLabels = JSON.parse('{{ bar_labels|escapejs }}' || '[]');
+        const barData = JSON.parse('{{ bar_data|escapejs }}' || '[]');
+
+        // Generate colors for Donut
+        const colors = ['#ec536c', '#f8b425', '#02a499', '#626ed4', '#ebeff2', '#343a40'];
+        const donutBgColors = donutData.map((_, i) => colors[i % colors.length]);
+
+        // Donut Chart
+        const ctxDonut = document.getElementById('donutChart').getContext('2d');
+        new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+                labels: donutLabels,
+                datasets: [{
+                    data: donutData,
+                    backgroundColor: donutBgColors,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: true, position: 'right' }
+                }
+            }
+        });
+
+        // Area Chart
+        const ctxArea = document.getElementById('areaChart').getContext('2d');
+        const gradientBlue = ctxArea.createLinearGradient(0, 0, 0, 400);
+        gradientBlue.addColorStop(0, 'rgba(236, 83, 108, 0.4)');
+        gradientBlue.addColorStop(1, 'rgba(236, 83, 108, 0.0)');
+        
+        new Chart(ctxArea, {
+            type: 'line',
+            data: {
+                labels: areaLabels,
+                datasets: [
+                    {
+                        label: 'Expenses ({{ request.user.profile.currency|default:"$"|escapejs }})',
+                        data: areaData,
+                        borderColor: '#ec536c',
+                        backgroundColor: gradientBlue,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 2
+                    }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // Bar Chart
+        const ctxBar = document.getElementById('barChart').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: barLabels,
+                datasets: [{
+                    label: 'Expense ({{ request.user.profile.currency|default:"$"|escapejs }})',
+                    data: barData,
+                    backgroundColor: '#f8b425',
+                    barThickness: 15,
+                    borderRadius: 2
+                }]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { border: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
